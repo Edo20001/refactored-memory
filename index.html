@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:light}body{margin:0}</style>
+</head>
+<body>
+<title>Mainly Report ISTTS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Tinos:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky action bar, form editor on the left, live A4 letter preview on the right (stacked on phones). */
+:root {
+  --bg: #f2f2f8;
+  --surface: #ffffff;
+  --field: #ffffff;
+  --fg: #1b1a33;
+  --muted: #5d5c78;
+  --line: #d8d7e8;
+  --accent: #3b3699;
+  --accent-fg: #ffffff;
+  --accent-soft: #e7e6f6;
+  --danger: #b3261e;
+  --ok: #1d6f46;
+  --stage: #dfdfec;
+  --paper: #ffffff;
+  --paper-ink: #151515;
+  --paper-brand: #3b3699;
+  --paper-mute: #8a8a8a;
+  --font-ui: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-paper: Tinos, "Times New Roman", Times, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13122a;
+    --surface: #1c1b39;
+    --field: #17162f;
+    --fg: #ebeaf8;
+    --muted: #a5a4c6;
+    --line: #353460;
+    --accent: #a09cf7;
+    --accent-fg: #13122a;
+    --accent-soft: #2b2a52;
+    --danger: #ff8d84;
+    --ok: #74d6a2;
+    --stage: #0c0b1e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13122a;
+  --surface: #1c1b39;
+  --field: #17162f;
+  --fg: #ebeaf8;
+  --muted: #a5a4c6;
+  --line: #353460;
+  --accent: #a09cf7;
+  --accent-fg: #13122a;
+  --accent-soft: #2b2a52;
+  --danger: #ff8d84;
+  --ok: #74d6a2;
+  --stage: #0c0b1e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 var(--font-ui);
+  padding-inline: 16px;
+  padding-block: 0 40px;
+}
+h1, h2, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* action bar */
+.bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 14px;
+}
+.bar h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.bar .sub { color: var(--muted); font-size: 13px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+.btn.small { padding: 6px 10px; font-size: 13px; font-weight: 500; }
+.btn.warn { border-color: var(--danger); color: var(--danger); }
+#status { font-size: 13px; color: var(--muted); min-height: 1.2em; flex-basis: 100%; }
+#status.ok { color: var(--ok); }
+#status.err { color: var(--danger); }
+
+/* two columns */
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  gap: 28px;
+  padding-block: 22px 0;
+  align-items: start;
+}
+@media (max-width: 940px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+.editor { display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+.group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.group > h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hint { color: var(--muted); font-size: 13px; }
+
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f > label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.f input[type="text"], .f input[type="number"], .f input[type="date"], .f select, .f textarea, .item input {
+  width: 100%;
+  min-width: 0;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.f textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
+.row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.mono { font-family: var(--font-mono); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+/* months */
+#months { display: flex; flex-direction: column; gap: 12px; }
+.month {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.mhead { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; }
+.mhead .f.bulan { flex: 1 1 140px; }
+.mhead .f.tahun { flex: 0 0 92px; }
+.mtag {
+  flex-basis: 100%;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 5px 9px;
+}
+.mtag b { font-weight: 700; }
+.items { display: flex; flex-direction: column; gap: 6px; }
+.item {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) 30px;
+  gap: 6px;
+  align-items: center;
+}
+.item .no { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-align: center; }
+.item .x {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  height: 30px;
+}
+.item .x:hover { color: var(--danger); background: var(--accent-soft); }
+.cols-head {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) 30px;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cols-head span:first-child { text-align: center; }
+.mfoot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
+@media (max-width: 520px) {
+  .item { grid-template-columns: 24px minmax(0, 1fr) 30px; }
+  .item input[data-f="jenis"] { grid-column: 2; }
+  .item .x { grid-column: 3; grid-row: 1 / span 2; }
+  .cols-head { display: none; }
+}
+
+details.more { border-top: 1px solid var(--line); padding-top: 12px; }
+details.more > summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+details.more[open] > summary { margin-bottom: 12px; }
+.more-body { display: flex; flex-direction: column; gap: 12px; }
+.upl { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; }
+.upl .thumb {
+  width: 64px; height: 44px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 11px; color: var(--muted);
+  overflow: hidden;
+  background: var(--field);
+}
+.upl .thumb img { max-width: 100%; max-height: 100%; }
+.upl .ctl { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.upl .ctl label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.upl .ctl input[type="file"] { font-size: 12px; max-width: 100%; }
+.upl.a4 { align-items: start; }
+.upl.a4 .thumb { width: 44px; height: 62px; }
+
+/* preview */
+.stage { background: var(--stage); border-radius: 10px; padding: 14px 16px 18px; min-width: 0; }
+@media (min-width: 941px) {
+  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 84px); max-height: calc(100vh - 100px); overflow: auto; }
+}
+.stage-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.holder { position: relative; margin-inline: auto; }
+.paper {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  width: 210mm;
+  min-height: 297mm;
+  background: var(--paper);
+  color: var(--paper-ink);
+  padding: 18mm 22mm 24mm;
+  font: 11pt/1.5 var(--font-paper);
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.25);
+}
+.kop { display: flex; gap: 5mm; align-items: center; min-height: 16mm; margin-bottom: 12mm; }
+.kop-mark { font-family: var(--font-ui); font-weight: 700; font-style: italic; font-size: 28pt; color: var(--paper-brand); line-height: 1; white-space: nowrap; }
+.kop-logo { height: 16mm; max-width: 40mm; object-fit: contain; }
+.kop-addr { font: 6.8pt/1.45 var(--font-ui); color: var(--paper-ink); white-space: pre-line; }
+.p-title { text-align: center; font-weight: 700; font-size: 11pt; }
+.p-no { text-align: center; font-size: 10pt; margin-bottom: 9mm; }
+.paper p { margin: 0 0 3mm; padding-left: 2mm; }
+.p-id { display: grid; grid-template-columns: 16mm 4mm 1fr; padding-left: 4mm; margin-bottom: 3mm; }
+.p-id div:nth-child(3n+2) { text-align: left; }
+.p-int { margin-top: 2mm; }
+.ptbl { table-layout: fixed; width: 150mm; margin: 1mm auto 6mm; border-collapse: collapse; font-size: 10.5pt; line-height: 1.35; }
+.ptbl th, .ptbl td { border: 0.25mm solid var(--paper-ink); padding: 1.2mm 2mm; vertical-align: top; overflow-wrap: anywhere; }
+.ptbl th { font-weight: 400; text-align: center; }
+.ptbl td.c1 { text-align: center; }
+.empty-note { color: var(--paper-mute); font-style: italic; }
+.sign { display: grid; grid-template-columns: 1fr 1fr; margin-top: 6mm; padding-left: 2mm; }
+.sign .col { display: flex; flex-direction: column; }
+.sign .col.r { text-align: center; }
+.sign .space { height: 24mm; display: flex; align-items: center; }
+.sign .col.r .space { justify-content: center; }
+.sign .space img { max-height: 24mm; max-width: 44mm; }
+.sign .date { margin-bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="bar">
+  <div>
+    <h1>Mainly Report ISTTS</h1>
+    <div class="sub">Isi data, lihat hasilnya langsung, lalu simpan sebagai PDF.</div>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn small" id="btn-reset">Kosongkan semua</button>
+    <button type="button" class="btn primary" id="btn-pdf" disabled>Unduh PDF</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+</div>
+
+<div class="wrap">
+  <div class="editor">
+    <section class="group">
+      <h2>Identitas</h2>
+      <div class="row2">
+        <div class="f"><label for="in-nama">Nama</label><input id="in-nama" type="text" data-k="nama" placeholder="Nama lengkap" autocomplete="off"></div>
+        <div class="f"><label for="in-nrp">NRP</label><input id="in-nrp" type="text" data-k="nrp" class="mono" placeholder="217170395" autocomplete="off" inputmode="numeric"></div>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Project per bulan</h2>
+      <p class="hint">Setiap bulan jadi satu tabel. Tabel disusun berurutan ke bawah di PDF, dan nama bulan tercetak tebal dengan huruf kapital. Tekan Enter di kolom Jenis untuk baris baru.</p>
+      <div id="months"></div>
+      <div><button type="button" class="btn" id="add-month">+ Tambah bulan</button></div>
+    </section>
+
+    <section class="group">
+      <h2>Kop surat A4</h2>
+      <p class="hint">Unggah gambar kop ukuran A4 (210 × 297 mm, tegak). Gambar dipakai sebagai latar halaman dan isi surat ditulis di atasnya. Tanpa gambar ini, kop teks dari bagian pengaturan lain yang dipakai.</p>
+      <div class="upl a4">
+        <div class="thumb" id="thumb-kopA4">A4</div>
+        <div class="ctl"><label for="img-kopA4">Gambar kop (PNG atau JPG)</label><input id="img-kopA4" type="file" accept="image/*" data-img="kopA4"><button type="button" class="btn small" data-clear="kopA4" id="clear-kopA4" hidden>Hapus kop A4</button></div>
+      </div>
+      <div class="f"><label for="in-kopPages">Tampil di</label><select id="in-kopPages" data-k="kopPages"><option value="all">Semua halaman</option><option value="first">Halaman pertama saja</option></select></div>
+      <div class="row2">
+        <div class="f"><label for="in-kopTop">Isi mulai dari atas (mm)</label><input id="in-kopTop" type="number" min="0" max="150" step="1" data-k="kopTop"></div>
+        <div class="f"><label for="in-kopBottom">Batas bawah isi (mm)</label><input id="in-kopBottom" type="number" min="0" max="100" step="1" data-k="kopBottom"></div>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Surat</h2>
+      <div class="f"><label for="in-nomor">Nomor surat</label><input id="in-nomor" type="text" data-k="nomor" autocomplete="off"></div>
+      <div class="row2">
+        <div class="f"><label for="in-kota">Kota</label><input id="in-kota" type="text" data-k="kota" autocomplete="off"></div>
+        <div class="f"><label for="in-tanggal">Tanggal surat</label><input id="in-tanggal" type="date" data-k="tanggal"></div>
+      </div>
+      <div class="f"><label for="in-mengetahui">Nama yang mengetahui</label><input id="in-mengetahui" type="text" data-k="mengetahui" placeholder="Nama atasan" autocomplete="off"></div>
+      <details class="more">
+        <summary>Pengaturan lain, kop surat, dan tanda tangan</summary>
+        <div class="more-body">
+          <div class="row2">
+            <div class="f"><label for="in-judul">Judul surat</label><input id="in-judul" type="text" data-k="judul" autocomplete="off"></div>
+            <div class="f"><label for="in-sebagai">Sebagai</label><input id="in-sebagai" type="text" data-k="sebagai" autocomplete="off"></div>
+          </div>
+          <div class="row2">
+            <div class="f"><label for="in-kolomNama">Judul kolom 2</label><input id="in-kolomNama" type="text" data-k="kolomNama" autocomplete="off"></div>
+            <div class="f"><label for="in-kolomJenis">Judul kolom 3</label><input id="in-kolomJenis" type="text" data-k="kolomJenis" autocomplete="off"></div>
+          </div>
+          <label class="check" for="in-lanjut"><input id="in-lanjut" type="checkbox" data-k="lanjut"> Lanjutkan nomor urut antar bulan</label>
+          <div class="f"><label for="in-kopNama">Tulisan pada kop (dipakai bila tidak ada logo)</label><input id="in-kopNama" type="text" data-k="kopNama" autocomplete="off"></div>
+          <div class="f"><label for="in-kopAlamat">Alamat pada kop, satu baris per alamat</label><textarea id="in-kopAlamat" data-k="kopAlamat"></textarea></div>
+          <div class="upl">
+            <div class="thumb" id="thumb-logo">logo</div>
+            <div class="ctl"><label for="img-logo">Logo kop (PNG atau JPG)</label><input id="img-logo" type="file" accept="image/*" data-img="logo"><button type="button" class="btn small" data-clear="logo" id="clear-logo" hidden>Hapus logo</button></div>
+          </div>
+          <div class="upl">
+            <div class="thumb" id="thumb-ttd">TTD</div>
+            <div class="ctl"><label for="img-ttd">Tanda tangan saya</label><input id="img-ttd" type="file" accept="image/*" data-img="ttd"><button type="button" class="btn small" data-clear="ttd" id="clear-ttd" hidden>Hapus tanda tangan</button></div>
+          </div>
+          <div class="upl">
+            <div class="thumb" id="thumb-ttd2">TTD</div>
+            <div class="ctl"><label for="img-ttd2">Tanda tangan yang mengetahui</label><input id="img-ttd2" type="file" accept="image/*" data-img="ttd2"><button type="button" class="btn small" data-clear="ttd2" id="clear-ttd2" hidden>Hapus tanda tangan</button></div>
+          </div>
+          <p class="hint">Gambar hanya diproses di browser ini dan tidak diunggah ke mana pun.</p>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="stage-head"><span>Pratinjau surat</span><span id="pages">-</span></div>
+    <div class="holder" id="holder"><div class="paper" id="paper" aria-label="Pratinjau Mainly Report"></div></div>
+  </div>
+</div>
+
+<datalist id="jenis-list">
+  <option value="Motion (IG-Post)"></option>
+  <option value="Motion (IG-Story)"></option>
+  <option value="Motion"></option>
+  <option value="Video"></option>
+  <option value="Video - Post"></option>
+  <option value="Ilustrasi 3D"></option>
+  <option value="Desain Poster"></option>
+  <option value="Foto"></option>
+</datalist>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  var MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var KEY = 'mainly-report-istts-v1';
+  var uidn = 0;
+  function nid() { uidn += 1; return 'k' + uidn.toString(36) + Math.random().toString(36).slice(2, 5); }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  var KOP_DEFAULT = 'Jl. Ngagel Jaya Tengah 73-77 Surabaya 60284 INDONESIA\n+6231 503 1818, +6231 502 4185\n+6231 502 1881, +6231 504 1505\nwww.istts.edu | pmb@istts.edu';
+  function baseGeneral() {
+    return { judul: 'MAINLY REPORT', nomor: '', sebagai: 'asisten PMB', nama: '', nrp: '', kolomNama: 'Nama', kolomJenis: 'Jenis',
+      kota: 'Surabaya', tanggal: todayISO(), mengetahui: '', kopNama: 'iSTTS', kopAlamat: KOP_DEFAULT, lanjut: false,
+      kopTop: '48', kopBottom: '28', kopPages: 'all' };
+  }
+  function row(n, j) { return { id: nid(), nama: n || '', jenis: j || '' }; }
+  function exampleState() {
+    var g = baseGeneral();
+    g.nomor = '002/S.Ket/SK-AsistenPMB/iSTTS/V/2019';
+    return {
+      g: g,
+      months: [{ id: nid(), month: 3, year: 2019, rows: [
+        row('Hari Nelayan Nasional', 'Motion (IG-Post)'),
+        row('Iklan FB (15 detik)', 'Motion'),
+        row('Pemilu', 'Motion (IG-Post)'),
+        row('Easter Day (Hari Paskah)', 'Motion (IG-Story)'),
+        row('Dokumentasi “Cangkrukan”', 'Video'),
+        row('After Movie “Cangkrukan”', 'Video - Post'),
+        row('Hall of Frame iSTTS', 'Ilustrasi 3D')
+      ] }],
+      img: { logo: null, ttd: null, ttd2: null, kopA4: null }
+    };
+  }
+  function blankState(prev) {
+    var d = new Date();
+    return { g: baseGeneral(), months: [{ id: nid(), month: d.getMonth(), year: d.getFullYear(), rows: [row(), row(), row()] }],
+      img: prev ? prev.img : { logo: null, ttd: null, ttd2: null, kopA4: null } };
+  }
+
+  var state = exampleState();
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && saved.g && Array.isArray(saved.months) && saved.months.length) {
+      state.g = Object.assign(baseGeneral(), saved.g);
+      state.months = saved.months.map(function (m) {
+        return { id: nid(), month: +m.month || 0, year: +m.year || new Date().getFullYear(),
+          rows: (Array.isArray(m.rows) && m.rows.length ? m.rows : [{}]).map(function (r) { return row(r.nama, r.jenis); }) };
+      });
+      state.img = Object.assign({ logo: null, ttd: null, ttd2: null, kopA4: null }, saved.img || {});
+    }
+  } catch (e) { /* storage unavailable */ }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) {
+      // a large A4 letterhead may not fit in browser storage: keep everything else
+      try { localStorage.setItem(KEY, JSON.stringify(Object.assign({}, state, { img: Object.assign({}, state.img, { kopA4: null }) }))); } catch (e2) { /* ignore */ }
+    }
+  }
+  function num(v, d) { var n = parseFloat(v); return isFinite(n) ? n : d; }
+
+  /* ---------- helpers ---------- */
+  function monthLabel(m) { return (MONTHS[m.month] + ' ' + m.year).toUpperCase(); }
+  function nonEmpty(r) { return r.nama.trim() || r.jenis.trim(); }
+  function cleanRows(m) { return m.rows.filter(nonEmpty); }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var p = iso.split('-').map(Number);
+    if (!p[0] || !p[1] || !p[2]) return '';
+    return p[2] + ' ' + MONTHS[p[1] - 1] + ' ' + p[0];
+  }
+  function pdfSafe(s) {
+    return String(s == null ? '' : s).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'")
+      .replace(/[–—]/g, '-').replace(/…/g, '...').replace(/[^\x00-\xFF]/g, '?');
+  }
+  function slug(s) { return String(s || '').trim().replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  var DOTS = '……………………';
+
+  /* ---------- static fields ---------- */
+  document.querySelectorAll('[data-k]').forEach(function (el) {
+    var k = el.dataset.k;
+    if (el.type === 'checkbox') el.checked = !!state.g[k]; else el.value = state.g[k] == null ? '' : state.g[k];
+    var h = function () { state.g[k] = el.type === 'checkbox' ? el.checked : el.value; if (k === 'lanjut') renderMonths(); schedule(); };
+    el.addEventListener('input', h);
+    el.addEventListener('change', h);
+  });
+
+  /* ---------- months editor ---------- */
+  var $months = $('months');
+  function findMonth(id) { return state.months.filter(function (m) { return m.id === id; })[0]; }
+
+  function renderMonths(focusId) {
+    var carried = 0;
+    $months.innerHTML = state.months.map(function (m) {
+      var start = state.g.lanjut ? carried : 0;
+      carried += cleanRows(m).length;
+      var opts = MONTHS.map(function (n, i) { return '<option value="' + i + '"' + (i === m.month ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+      var rows = m.rows.map(function (r, ri) {
+        var base = m.id + '-' + r.id;
+        return '<div class="item">' +
+          '<span class="no">' + (start + ri + 1) + '</span>' +
+          '<input id="' + base + '-nama" type="text" data-mid="' + m.id + '" data-rid="' + r.id + '" data-f="nama" value="' + esc(r.nama) + '" placeholder="Nama project" aria-label="Nama project ' + (ri + 1) + '" autocomplete="off">' +
+          '<input id="' + base + '-jenis" type="text" list="jenis-list" data-mid="' + m.id + '" data-rid="' + r.id + '" data-f="jenis" value="' + esc(r.jenis) + '" placeholder="Jenis" aria-label="Jenis ' + (ri + 1) + '" autocomplete="off">' +
+          '<button type="button" class="x" data-act="del-row" data-mid="' + m.id + '" data-rid="' + r.id + '" aria-label="Hapus baris ' + (ri + 1) + '">×</button>' +
+          '</div>';
+      }).join('');
+      return '<div class="month">' +
+        '<div class="mhead">' +
+          '<div class="f bulan"><label for="' + m.id + '-bulan">Bulan</label><select id="' + m.id + '-bulan" data-mid="' + m.id + '" data-f="month">' + opts + '</select></div>' +
+          '<div class="f tahun"><label for="' + m.id + '-tahun">Tahun</label><input id="' + m.id + '-tahun" type="number" min="2000" max="2100" data-mid="' + m.id + '" data-f="year" value="' + m.year + '"></div>' +
+          '<span class="mtag">Pada bulan <b id="' + m.id + '-tag">' + esc(monthLabel(m)) + '</b></span>' +
+        '</div>' +
+        '<div class="cols-head"><span>No</span><span>Nama project</span><span>Jenis</span><span></span></div>' +
+        '<div class="items">' + rows + '</div>' +
+        '<div class="mfoot"><button type="button" class="btn small" data-act="add-row" data-mid="' + m.id + '">+ Tambah project</button>' +
+        '<button type="button" class="btn small warn" data-act="del-month" data-mid="' + m.id + '"' + (state.months.length < 2 ? ' disabled' : '') + '>Hapus bulan</button></div>' +
+      '</div>';
+    }).join('');
+    if (focusId) { var f = $(focusId); if (f) f.focus(); }
+  }
+
+  function onMonthInput(e) {
+    var t = e.target, mid = t.dataset && t.dataset.mid;
+    if (!mid) return;
+    var m = findMonth(mid); if (!m) return;
+    var f = t.dataset.f;
+    if (f === 'nama' || f === 'jenis') {
+      var r = m.rows.filter(function (x) { return x.id === t.dataset.rid; })[0];
+      if (r) r[f] = t.value;
+    } else if (f === 'month') { m.month = +t.value; }
+    else if (f === 'year') { m.year = parseInt(t.value, 10) || m.year; }
+    var tag = $(m.id + '-tag'); if (tag) tag.textContent = monthLabel(m);
+    schedule();
+  }
+  $months.addEventListener('input', onMonthInput);
+  $months.addEventListener('change', onMonthInput);
+
+  $months.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var m = findMonth(b.dataset.mid); if (!m) return;
+    var act = b.dataset.act;
+    if (act === 'add-row') {
+      var nr = row(); m.rows.push(nr); renderMonths(m.id + '-' + nr.id + '-nama');
+    } else if (act === 'del-row') {
+      if (m.rows.length > 1) m.rows = m.rows.filter(function (r) { return r.id !== b.dataset.rid; }); else m.rows = [row()];
+      renderMonths();
+    } else if (act === 'del-month') {
+      if (state.months.length > 1) { state.months = state.months.filter(function (x) { return x.id !== m.id; }); renderMonths(); }
+    }
+    schedule();
+  });
+
+  $months.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var t = e.target; if (!t.dataset || t.dataset.f !== 'jenis') return;
+    e.preventDefault();
+    var m = findMonth(t.dataset.mid); if (!m) return;
+    var idx = m.rows.map(function (r) { return r.id; }).indexOf(t.dataset.rid);
+    if (idx === m.rows.length - 1) {
+      var nr = row(); m.rows.push(nr); renderMonths(m.id + '-' + nr.id + '-nama'); schedule();
+    } else {
+      var nx = $(m.id + '-' + m.rows[idx + 1].id + '-nama'); if (nx) nx.focus();
+    }
+  });
+
+  $('add-month').addEventListener('click', function () {
+    var last = state.months[state.months.length - 1];
+    var mo = last ? last.month + 1 : new Date().getMonth(), yr = last ? last.year : new Date().getFullYear();
+    if (mo > 11) { mo = 0; yr += 1; }
+    var nm = { id: nid(), month: mo, year: yr, rows: [row()] };
+    state.months.push(nm);
+    renderMonths(nm.id + '-' + nm.rows[0].id + '-nama');
+    schedule();
+  });
+
+  /* ---------- images ---------- */
+  function updateThumbs() {
+    ['logo', 'ttd', 'ttd2', 'kopA4'].forEach(function (k) {
+      var th = $('thumb-' + k), clr = $('clear-' + k), im = state.img[k];
+      th.innerHTML = im ? '<img alt="" src="' + im.url + '">' : (k === 'logo' ? 'logo' : (k === 'kopA4' ? 'A4' : 'TTD'));
+      clr.hidden = !im;
+    });
+  }
+  document.querySelectorAll('[data-img]').forEach(function (inp) {
+    inp.addEventListener('change', function () {
+      var file = inp.files && inp.files[0]; if (!file) return;
+      var key = inp.dataset.img, rd = new FileReader();
+      rd.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var c = document.createElement('canvas'), cx;
+          if (key === 'kopA4') {
+            // normalise to an exact A4 page (1240 x 1754 px, about 150 dpi) on a white ground
+            c.width = 1240; c.height = 1754; cx = c.getContext('2d');
+            cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, c.width, c.height);
+            var rr = Math.min(c.width / im.width, c.height / im.height), dw = im.width * rr, dh = im.height * rr;
+            cx.drawImage(im, (c.width - dw) / 2, 0, dw, dh);
+            state.img[key] = { url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height, fmt: 'JPEG' };
+            if (Math.abs(im.width / im.height - 210 / 297) / (210 / 297) > 0.03) setStatus('Gambar kop bukan rasio A4. Gambar dimuat utuh dan sisa tepinya berwarna putih.');
+            else setStatus('Kop A4 terpasang.', 'ok');
+          } else {
+            var max = 700, r = Math.min(1, max / Math.max(im.width, im.height));
+            c.width = Math.round(im.width * r); c.height = Math.round(im.height * r);
+            c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+            state.img[key] = { url: c.toDataURL('image/png'), w: c.width, h: c.height, fmt: 'PNG' };
+          }
+          updateThumbs(); schedule();
+        };
+        im.onerror = function () { setStatus('Gambar tidak bisa dibaca. Coba file PNG atau JPG.', 'err'); };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(file);
+    });
+  });
+  document.querySelectorAll('[data-clear]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.dataset.clear; state.img[k] = null;
+      var inp = $('img-' + k); if (inp) inp.value = '';
+      updateThumbs(); schedule();
+    });
+  });
+
+  /* ---------- preview ---------- */
+  var $paper = $('paper'), $holder = $('holder'), $stage = $('stage');
+  function renderPreview() {
+    var g = state.g, carried = 0;
+    var kop = (state.img.logo ? '<img class="kop-logo" alt="" src="' + state.img.logo.url + '">' : '<div class="kop-mark">' + esc(g.kopNama) + '</div>') +
+      '<div class="kop-addr">' + esc(g.kopAlamat) + '</div>';
+    var months = state.months.map(function (m) {
+      var rows = cleanRows(m); if (!rows.length) return '';
+      var start = g.lanjut ? carried : 0; carried += rows.length;
+      return '<p class="p-int">Pada bulan <b>' + esc(monthLabel(m)) + '</b>, telah melakukan berbagai pekerjaan yaitu:</p>' +
+        '<table class="ptbl"><colgroup><col style="width:12mm"><col style="width:82mm"><col style="width:56mm"></colgroup>' +
+        '<thead><tr><th>No</th><th>' + esc(g.kolomNama) + '</th><th>' + esc(g.kolomJenis) + '</th></tr></thead><tbody>' +
+        rows.map(function (r, i) { return '<tr><td class="c1">' + (start + i + 1) + '</td><td>' + esc(r.nama) + '</td><td>' + esc(r.jenis) + '</td></tr>'; }).join('') +
+        '</tbody></table>';
+    }).join('');
+    if (!months) months = '<p class="empty-note">Belum ada project. Isi tabel di sebelah kiri.</p>';
+    var tgl = [g.kota, fmtDate(g.tanggal)].filter(Boolean).join(', ');
+    $paper.innerHTML =
+      (state.img.kopA4 ? '' : '<div class="kop">' + kop + '</div>') +
+      '<div class="p-title">' + esc(g.judul) + '</div>' +
+      '<div class="p-no">' + esc(g.nomor) + '</div>' +
+      '<p>Sehubungan dengan laporan progress report sebagai ' + esc(g.sebagai) + ' saya atas nama,</p>' +
+      '<div class="p-id"><div>Nama</div><div>:</div><div>' + (esc(g.nama) || DOTS) + '</div>' +
+      '<div>NRP</div><div>:</div><div>' + (esc(g.nrp) || DOTS) + '</div></div>' +
+      months +
+      '<p>Demikian laporan progress report ini saya buat dengan sebenar-benarnya atas perhatian dan kerjasamanya saya ucapkan terimakasih.</p>' +
+      '<div class="sign"><div class="col"><div class="date">' + esc(tgl) + '</div><div>Hormat saya,</div>' +
+      '<div class="space">' + (state.img.ttd ? '<img alt="" src="' + state.img.ttd.url + '">' : '') + '</div><div>(' + (esc(g.nama) || DOTS) + ')</div></div>' +
+      '<div class="col r"><div class="date">&nbsp;</div><div>Mengetahui</div>' +
+      '<div class="space">' + (state.img.ttd2 ? '<img alt="" src="' + state.img.ttd2.url + '">' : '') + '</div><div>(' + (esc(g.mengetahui) || DOTS) + ')</div></div></div>';
+    var k4 = state.img.kopA4;
+    $paper.style.backgroundImage = k4 ? 'url("' + k4.url + '")' : 'none';
+    $paper.style.backgroundSize = '210mm 297mm';
+    $paper.style.backgroundRepeat = g.kopPages === 'first' ? 'no-repeat' : 'repeat-y';
+    $paper.style.paddingTop = k4 ? num(g.kopTop, 48) + 'mm' : '';
+    $paper.style.paddingBottom = k4 ? num(g.kopBottom, 28) + 'mm' : '';
+    fitPaper();
+  }
+  function fitPaper() {
+    var avail = $stage.clientWidth - 32; if (avail <= 0) return;
+    var w = $paper.offsetWidth || 794, s = Math.min(1, avail / w);
+    $paper.style.transform = 'scale(' + s + ')';
+    $holder.style.width = (w * s) + 'px';
+    $holder.style.height = ($paper.offsetHeight * s) + 'px';
+  }
+  if (window.ResizeObserver) new ResizeObserver(fitPaper).observe($stage); else window.addEventListener('resize', fitPaper);
+
+  /* ---------- PDF ---------- */
+  function buildPdf(dry) {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+    var g = state.g, k4 = state.img.kopA4;
+    var PW = 210, PH = 297, ML = 22, BOT = k4 ? num(g.kopBottom, 28) : 24, TW = PW - 2 * ML, LH = 5.6;
+    var topFirst = k4 ? num(g.kopTop, 48) : 48;
+    var topNext = (k4 && g.kopPages !== 'first') ? topFirst : 20;
+    var y = 18;
+    function bg() { if (k4 && !dry) doc.addImage(k4.url, k4.fmt || 'JPEG', 0, 0, PW, PH); }
+    function newPage() { doc.addPage(); if (g.kopPages !== 'first') bg(); y = topNext; }
+    function fitImg(im, bw, bh) { var r = Math.min(bw / im.w, bh / im.h); return { w: im.w * r, h: im.h * r }; }
+    function blank(s) { return pdfSafe(s).trim() || '..........'; }
+
+    // kop: a full A4 letterhead image replaces the text letterhead
+    bg();
+    var leftW;
+    if (!k4) {
+    if (state.img.logo) {
+      var f = fitImg(state.img.logo, 40, 16);
+      if (!dry) doc.addImage(state.img.logo.url, 'PNG', ML, y + (16 - f.h) / 2, f.w, f.h);
+      leftW = f.w;
+    } else {
+      doc.setFont('helvetica', 'bolditalic'); doc.setFontSize(28); doc.setTextColor(59, 54, 153);
+      doc.text(pdfSafe(g.kopNama), ML, y + 12);
+      leftW = doc.getTextWidth(pdfSafe(g.kopNama));
+      doc.setTextColor(0, 0, 0);
+    }
+    var addr = pdfSafe(g.kopAlamat).split('\n').filter(function (s) { return s.trim(); });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8);
+    var top = y + Math.max(0, (16 - addr.length * 3.3) / 2);
+    addr.forEach(function (ln, i) { doc.text(ln, ML + leftW + 5, top + i * 3.3 + 2.4); });
+    }
+    y = topFirst;
+
+    // title
+    doc.setFont('times', 'bold'); doc.setFontSize(11);
+    doc.text(pdfSafe(g.judul), PW / 2, y, { align: 'center' }); y += 5.4;
+    doc.setFont('times', 'normal'); doc.setFontSize(10);
+    doc.text(pdfSafe(g.nomor), PW / 2, y, { align: 'center' }); y += 11;
+
+    // opening + identity
+    doc.setFontSize(11);
+    doc.splitTextToSize(pdfSafe('Sehubungan dengan laporan progress report sebagai ' + g.sebagai + ' saya atas nama,'), TW - 2)
+      .forEach(function (ln) { doc.text(ln, ML + 2, y); y += LH; });
+    y += 1.5;
+    [['Nama', g.nama], ['NRP', g.nrp]].forEach(function (p) {
+      doc.text(p[0], ML + 4, y); doc.text(':', ML + 20, y); doc.text(blank(p[1]), ML + 24, y); y += LH;
+    });
+    y += 3;
+
+    // tables
+    var colW = [12, 82, 56], tw = 150, x0 = (PW - tw) / 2, colX = [x0, x0 + 12, x0 + 94];
+    doc.setLineWidth(0.25); doc.setDrawColor(0, 0, 0);
+    function drawHead() {
+      var h = 6.6;
+      doc.setFont('times', 'normal'); doc.setFontSize(10.5);
+      var labels = ['No', pdfSafe(g.kolomNama), pdfSafe(g.kolomJenis)];
+      for (var i = 0; i < 3; i++) { doc.rect(colX[i], y, colW[i], h); doc.text(labels[i], colX[i] + colW[i] / 2, y + 4.5, { align: 'center' }); }
+      y += h;
+    }
+    function measure(r) {
+      doc.setFont('times', 'normal'); doc.setFontSize(10.5);
+      var a = doc.splitTextToSize(pdfSafe(r.nama), colW[1] - 4), b = doc.splitTextToSize(pdfSafe(r.jenis), colW[2] - 4);
+      var n = Math.max(a.length, b.length, 1);
+      return { a: a, b: b, h: n * 4.6 + 2.8 };
+    }
+    function drawRow(m, no) {
+      doc.setFont('times', 'normal'); doc.setFontSize(10.5);
+      for (var i = 0; i < 3; i++) doc.rect(colX[i], y, colW[i], m.h);
+      doc.text(String(no), colX[0] + colW[0] / 2, y + 4.5, { align: 'center' });
+      m.a.forEach(function (ln, i) { doc.text(ln, colX[1] + 2, y + 4.5 + i * 4.6); });
+      m.b.forEach(function (ln, i) { doc.text(ln, colX[2] + 2, y + 4.5 + i * 4.6); });
+      y += m.h;
+    }
+    var carried = 0;
+    state.months.forEach(function (mo) {
+      var rows = cleanRows(mo); if (!rows.length) return;
+      var start = g.lanjut ? carried : 0; carried += rows.length;
+      var ms = rows.map(measure);
+      if (y + LH + 2 + 6.6 + ms[0].h > PH - BOT) newPage();
+      // intro line: normal text with the month in bold capitals
+      doc.setFontSize(11);
+      var segs = [['Pada bulan ', 'normal'], [monthLabel(mo), 'bold'], [', telah melakukan berbagai pekerjaan yaitu:', 'normal']];
+      var x = ML + 2;
+      segs.forEach(function (s) { doc.setFont('times', s[1]); doc.text(s[0], x, y); x += doc.getTextWidth(s[0]); });
+      y += LH + 1.2;
+      drawHead();
+      ms.forEach(function (m, i) {
+        if (y + m.h > PH - BOT) { newPage(); drawHead(); }
+        drawRow(m, start + i + 1);
+      });
+      y += 6;
+    });
+
+    // closing + signatures
+    if (y + 66 > PH - BOT) newPage();
+    doc.setFont('times', 'normal'); doc.setFontSize(11);
+    doc.splitTextToSize('Demikian laporan progress report ini saya buat dengan sebenar-benarnya atas perhatian dan kerjasamanya saya ucapkan terimakasih.', TW - 2)
+      .forEach(function (ln) { doc.text(ln, ML + 2, y); y += LH; });
+    y += 6;
+    doc.text(pdfSafe([g.kota, fmtDate(g.tanggal)].filter(Boolean).join(', ')), ML + 2, y); y += LH;
+    var cx = 150;
+    doc.text('Hormat saya,', ML + 2, y); doc.text('Mengetahui', cx, y, { align: 'center' });
+    y += 2.5;
+    var sigH = 24;
+    if (state.img.ttd && !dry) { var a = fitImg(state.img.ttd, 44, sigH); doc.addImage(state.img.ttd.url, 'PNG', ML + 2, y + (sigH - a.h) / 2, a.w, a.h); }
+    if (state.img.ttd2 && !dry) { var b = fitImg(state.img.ttd2, 44, sigH); doc.addImage(state.img.ttd2.url, 'PNG', cx - b.w / 2, y + (sigH - b.h) / 2, b.w, b.h); }
+    y += sigH + 4;
+    doc.text('(' + blank(g.nama) + ')', ML + 2, y);
+    doc.text('(' + blank(g.mengetahui) + ')', cx, y, { align: 'center' });
+    return doc;
+  }
+
+  /* ---------- refresh / status ---------- */
+  var timer = null, $pages = $('pages'), $status = $('status'), $btn = $('btn-pdf');
+  function setStatus(msg, kind) { $status.textContent = msg || ''; $status.className = kind || ''; }
+  function updatePages() {
+    if (!(window.jspdf && window.jspdf.jsPDF)) { $pages.textContent = 'mesin PDF belum termuat'; return; }
+    try { var n = buildPdf(true).getNumberOfPages(); $pages.textContent = 'PDF: ' + n + ' halaman A4'; }
+    catch (e) { $pages.textContent = 'PDF: periksa isian'; }
+  }
+  function refresh() { renderPreview(); updatePages(); }
+  function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 150); save(); }
+
+  /* ---------- download ---------- */
+  var dl = null, hasRuntime = !!(window.claude && window.claude.use), pdfReady = !!(window.jspdf && window.jspdf.jsPDF);
+  function syncBtn() { $btn.disabled = !(pdfReady && (hasRuntime ? !!dl : true)); }
+  if (hasRuntime) {
+    window.claude.use('downloads').then(function (d) {
+      dl = d; syncBtn();
+      if (!d) setStatus('Tombol unduh tidak tersedia di tampilan ini. Buka halaman ini langsung di claude.ai.', 'err');
+    }, function () { setStatus('Tombol unduh tidak tersedia di tampilan ini.', 'err'); });
+  }
+  if (!pdfReady) setStatus('Mesin PDF gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.', 'err');
+  syncBtn();
+
+  $btn.addEventListener('click', function () {
+    var first = state.months.filter(function (m) { return cleanRows(m).length; })[0] || state.months[0];
+    var name = 'Mainly-Report-' + (slug(state.g.nama) || 'Tanpa-Nama') + '-' + MONTHS[first.month] + '-' + first.year + '.pdf';
+    $btn.disabled = true; setStatus('Menyiapkan PDF...');
+    try {
+      var doc = buildPdf();
+      if (!hasRuntime) { doc.save(name); setStatus('PDF diunduh.', 'ok'); $btn.disabled = false; return; }
+      dl.save({ filename: name, data: doc.output('blob') }).then(function () {
+        setStatus('PDF tersimpan: ' + name, 'ok');
+      }, function (err) {
+        var c = err && err.code;
+        if (c === 'declined') setStatus('Unduhan dibatalkan.');
+        else if (c === 'rate_limited') setStatus('Ada permintaan unduh yang masih terbuka. Tunggu sebentar lalu coba lagi.', 'err');
+        else setStatus('PDF tidak bisa disimpan (' + (c || 'gagal') + ').', 'err');
+      }).then(syncBtn);
+    } catch (e) { setStatus('PDF gagal dibuat. Periksa isian lalu coba lagi.', 'err'); syncBtn(); }
+  });
+
+  /* ---------- reset (two-step, no confirm dialog) ---------- */
+  var $reset = $('btn-reset'), resetTimer = null;
+  $reset.addEventListener('click', function () {
+    if ($reset.dataset.armed !== '1') {
+      $reset.dataset.armed = '1'; $reset.textContent = 'Yakin? Klik sekali lagi';
+      resetTimer = setTimeout(function () { $reset.dataset.armed = '0'; $reset.textContent = 'Kosongkan semua'; }, 3500);
+      return;
+    }
+    clearTimeout(resetTimer); $reset.dataset.armed = '0'; $reset.textContent = 'Kosongkan semua';
+    state = blankState(state);
+    document.querySelectorAll('[data-k]').forEach(function (el) {
+      var k = el.dataset.k; if (el.type === 'checkbox') el.checked = !!state.g[k]; else el.value = state.g[k] == null ? '' : state.g[k];
+    });
+    renderMonths(); updateThumbs(); refresh(); save(); setStatus('Semua isian dikosongkan.');
+  });
+
+  /* ---------- boot ---------- */
+  renderMonths(); updateThumbs(); refresh();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPaper);
+})();
+</script>
+
+</body>
+</html>
